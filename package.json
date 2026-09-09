@@ -20,5 +20,11 @@
   "engines": {
     "node": ">=24.0.0"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "prisma": "^6.15.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.15.0"
+  }
 }

@@ -3,7 +3,7 @@ export interface BlockchainConfigState {
   message: string;
 }
 
-export function getTokenIntegrationState(env: NodeJS.ProcessEnv): BlockchainConfigState {
+export function getTokenIntegrationState(env: Record<string, string | undefined>): BlockchainConfigState {
   if (!env.ZVX_MINT_ADDRESS) {
     return { configured: false, message: "Token integration not configured." };
   }

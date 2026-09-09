@@ -37,13 +37,15 @@ export const agentSchema = z.object({
 export const workflowSchema = z.object({
   name: z.string().min(1).max(120),
   description: z.string().max(1000).optional(),
-  nodes: z.array(
-    z.object({
-      nodeType: z.string().min(1),
-      name: z.string().min(1),
-      config: z.record(z.unknown()).default({}),
-      positionX: z.number().default(0),
-      positionY: z.number().default(0)
-    })
-  ).min(2)
+  nodes: z
+    .array(
+      z.object({
+        nodeType: z.string().min(1),
+        name: z.string().min(1),
+        config: z.record(z.string(), z.unknown()).default({}),
+        positionX: z.number().default(0),
+        positionY: z.number().default(0)
+      })
+    )
+    .min(2)
 });

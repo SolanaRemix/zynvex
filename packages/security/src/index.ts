@@ -1,4 +1,4 @@
-export const ROLE_PERMISSIONS = {
+export const ROLE_PERMISSIONS: Record<string, string[]> = {
   OWNER: ["*"],
   ADMIN: [
     "organization.read",
@@ -24,11 +24,11 @@ export const ROLE_PERMISSIONS = {
   MEMBER: ["projects.create", "projects.read", "agents.execute", "workflows.execute"],
   DEVELOPER: ["projects.read", "projects.update", "agents.create", "agents.execute", "workflows.create", "workflows.execute", "api_keys.manage"],
   VIEWER: ["organization.read", "projects.read"]
-} as const;
+};
 
 export type RoleName = keyof typeof ROLE_PERMISSIONS;
 
 export function can(role: RoleName, permission: string): boolean {
-  const allowed = ROLE_PERMISSIONS[role];
+  const allowed = ROLE_PERMISSIONS[role] ?? [];
   return allowed.includes("*") || allowed.includes(permission);
 }

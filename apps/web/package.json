@@ -15,7 +15,7 @@
     "prisma:migrate": "prisma migrate dev --schema ../../packages/database/prisma/schema.prisma"
   },
   "dependencies": {
-    "@prisma/client": "^7.10.0",
+    "@prisma/client": "^6.15.0",
     "@solana/web3.js": "^1.99.0",
     "@tanstack/react-query": "^5.102.8",
     "@zynvex/agents": "1.0.0",
@@ -32,7 +32,7 @@
     "lucide-react": "^1.43.0",
     "next": "16.3.4",
     "next-auth": "^4.24.15",
-    "prisma": "^8.0.0-rc.13",
+    "prisma": "^6.15.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "uuid": "^14.0.2",
@@ -40,6 +40,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",

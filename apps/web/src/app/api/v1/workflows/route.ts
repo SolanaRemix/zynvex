@@ -1,4 +1,4 @@
-import { prisma } from "@zynvex/database";
+import { type Prisma, prisma } from "@zynvex/database";
 import { WORKFLOW_NODE_TYPES } from "@zynvex/workflows";
 import { requestContext } from "@/lib/request";
 import { workflowSchema } from "@/lib/input";
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
         organizationId: session.organizationId,
         workflowId: workflow.id,
         version: 1,
-        definition: { nodes: body.nodes }
+        definition: { nodes: body.nodes } as Prisma.InputJsonValue
       }
     });
 
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
         workflowId: workflow.id,
         nodeType: node.nodeType,
         name: node.name,
-        config: node.config,
+        config: node.config as Prisma.InputJsonValue,
         positionX: node.positionX,
         positionY: node.positionY
       }))
