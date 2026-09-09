@@ -24,15 +24,7 @@ export async function GET(request: Request) {
     });
 
     return Response.json({
-      keys: keys.map((key: {
-        id: string;
-        name: string;
-        scope: string[];
-        keyPrefix: string;
-        createdAt: Date;
-        lastUsedAt: Date | null;
-        expiresAt: Date | null;
-      }) => ({
+      keys: keys.map((key) => ({
         id: key.id,
         name: key.name,
         scope: key.scope,
