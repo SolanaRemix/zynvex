@@ -1,0 +1,28 @@
+export type AgentExecutionStage =
+  | "REQUEST"
+  | "AUTHORIZATION"
+  | "CONTEXT"
+  | "MEMORY"
+  | "KNOWLEDGE"
+  | "PLANNING"
+  | "TOOL_SELECTION"
+  | "TOOL_EXECUTION"
+  | "OBSERVATION"
+  | "NEXT_STEP"
+  | "FINAL_RESPONSE"
+  | "PERSISTENCE";
+
+export const AGENT_PIPELINE: AgentExecutionStage[] = [
+  "REQUEST",
+  "AUTHORIZATION",
+  "CONTEXT",
+  "MEMORY",
+  "KNOWLEDGE",
+  "PLANNING",
+  "TOOL_SELECTION",
+  "TOOL_EXECUTION",
+  "OBSERVATION",
+  "NEXT_STEP",
+  "FINAL_RESPONSE",
+  "PERSISTENCE"
+];

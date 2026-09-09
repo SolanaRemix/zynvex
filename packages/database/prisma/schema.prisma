@@ -1,0 +1,614 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(uuid())
+  organizationId  String?
+  email           String    @unique
+  passwordHash    String?
+  name            String?
+  emailVerifiedAt DateTime?
+  avatarUrl       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  @@index([organizationId])
+  @@index([createdAt])
+}
+
+model Organization {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  @@index([createdAt])
+}
+
+model OrganizationMember {
+  id             String   @id @default(uuid())
+  organizationId String
+  userId         String
+  role           String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+}
+
+model Role {
+  id             String   @id @default(uuid())
+  organizationId String
+  name           String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
+model Permission {
+  id         String   @id @default(uuid())
+  key        String   @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Session {
+  id             String   @id @default(uuid())
+  organizationId String
+  userId         String
+  token          String   @unique
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([userId])
+}
+
+model Project {
+  id             String   @id @default(uuid())
+  organizationId String
+  ownerId        String
+  name           String
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  @@index([organizationId])
+  @@index([ownerId])
+  @@index([createdAt])
+}
+
+model Conversation {
+  id             String   @id @default(uuid())
+  organizationId String
+  projectId      String?
+  userId         String
+  title          String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  organizationId String
+  conversationId String
+  role           String
+  content        String
+  model          String?
+  usageInput     Int?
+  usageOutput    Int?
+  estimatedCost  Decimal? @db.Decimal(18, 8)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([conversationId])
+  @@index([createdAt])
+}
+
+model Attachment {
+  id             String   @id @default(uuid())
+  organizationId String
+  messageId      String?
+  projectId      String?
+  documentId     String?
+  filename       String
+  mimeType       String
+  size           Int
+  storageKey     String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([messageId])
+  @@index([projectId])
+}
+
+model Document {
+  id              String   @id @default(uuid())
+  organizationId  String
+  projectId       String?
+  knowledgeBaseId String?
+  title           String
+  sourceType      String
+  status          String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([knowledgeBaseId])
+}
+
+model DocumentChunk {
+  id             String   @id @default(uuid())
+  organizationId String
+  documentId     String
+  chunkIndex     Int
+  content        String
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([documentId])
+}
+
+model Embedding {
+  id             String   @id @default(uuid())
+  organizationId String
+  chunkId        String
+  vectorRef      String
+  provider       String
+  model          String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([chunkId])
+}
+
+model KnowledgeBase {
+  id             String   @id @default(uuid())
+  organizationId String
+  projectId      String?
+  name           String
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([projectId])
+}
+
+model Memory {
+  id             String   @id @default(uuid())
+  organizationId String
+  projectId      String?
+  ownerId        String
+  scope          String
+  source         String
+  confidence     Float
+  content        String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([ownerId])
+}
+
+model Agent {
+  id                String   @id @default(uuid())
+  organizationId    String
+  projectId         String?
+  ownerId           String
+  name              String
+  description       String?
+  status            String
+  systemPrompt      String
+  model             String
+  temperature       Float    @default(0.2)
+  maxIterations     Int      @default(10)
+  timeoutSeconds    Int      @default(60)
+  approvalPolicy    String   @default("auto")
+  outputFormat      String   @default("text")
+  permissions       Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  deletedAt         DateTime?
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([ownerId])
+}
+
+model AgentVersion {
+  id             String   @id @default(uuid())
+  organizationId String
+  agentId        String
+  version        Int
+  snapshot       Json
+  createdAt      DateTime @default(now())
+
+  @@unique([agentId, version])
+  @@index([organizationId])
+  @@index([agentId])
+}
+
+model AgentTool {
+  id             String   @id @default(uuid())
+  organizationId String
+  agentId        String
+  toolId         String
+  config         Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([agentId, toolId])
+  @@index([organizationId])
+  @@index([agentId])
+}
+
+model Tool {
+  id             String   @id @default(uuid())
+  organizationId String?
+  name           String   @unique
+  description    String
+  schema         Json
+  permissions    Json
+  authRequired   Boolean  @default(false)
+  timeoutSeconds Int      @default(30)
+  riskLevel      String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
+model ToolCredential {
+  id             String   @id @default(uuid())
+  organizationId String
+  toolId         String
+  name           String
+  secretCipher   String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([toolId])
+}
+
+model AgentExecution {
+  id             String   @id @default(uuid())
+  organizationId String
+  projectId      String?
+  agentId        String
+  startedById    String
+  status         String
+  input          Json
+  output         Json?
+  startedAt      DateTime @default(now())
+  completedAt    DateTime?
+  cost           Decimal? @db.Decimal(18, 8)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([agentId])
+  @@index([createdAt])
+}
+
+model AgentExecutionStep {
+  id             String   @id @default(uuid())
+  organizationId String
+  executionId    String
+  stepIndex      Int
+  stage          String
+  payload        Json?
+  createdAt      DateTime @default(now())
+
+  @@unique([executionId, stepIndex])
+  @@index([organizationId])
+  @@index([executionId])
+}
+
+model Workflow {
+  id             String   @id @default(uuid())
+  organizationId String
+  projectId      String?
+  ownerId        String
+  name           String
+  description    String?
+  status         String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([ownerId])
+}
+
+model WorkflowVersion {
+  id             String   @id @default(uuid())
+  organizationId String
+  workflowId     String
+  version        Int
+  definition     Json
+  createdAt      DateTime @default(now())
+
+  @@unique([workflowId, version])
+  @@index([organizationId])
+  @@index([workflowId])
+}
+
+model WorkflowExecution {
+  id             String   @id @default(uuid())
+  organizationId String
+  workflowId     String
+  startedById    String
+  status         String
+  startedAt      DateTime @default(now())
+  completedAt    DateTime?
+  failureReason  String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([workflowId])
+  @@index([createdAt])
+}
+
+model WorkflowNode {
+  id             String   @id @default(uuid())
+  organizationId String
+  workflowId     String
+  nodeType       String
+  name           String
+  config         Json
+  positionX      Float
+  positionY      Float
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([workflowId])
+}
+
+model Task {
+  id             String   @id @default(uuid())
+  organizationId String
+  projectId      String?
+  sourceType     String
+  sourceId       String
+  status         String
+  startedAt      DateTime?
+  completedAt    DateTime?
+  durationMs     Int?
+  cost           Decimal? @db.Decimal(18, 8)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([createdAt])
+}
+
+model TaskEvent {
+  id             String   @id @default(uuid())
+  organizationId String
+  taskId         String
+  level          String
+  message        String
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([taskId])
+}
+
+model ModelProvider {
+  id             String   @id @default(uuid())
+  organizationId String?
+  name           String   @unique
+  enabled        Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
+model ModelConfiguration {
+  id             String   @id @default(uuid())
+  organizationId String
+  providerId     String
+  model          String
+  config         Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([providerId])
+}
+
+model UsageRecord {
+  id             String   @id @default(uuid())
+  organizationId String
+  projectId      String?
+  agentId        String?
+  executionId    String?
+  provider       String
+  model          String
+  inputTokens    Int
+  outputTokens   Int
+  estimatedCost  Decimal  @db.Decimal(18, 8)
+  recordedAt     DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([agentId])
+  @@index([executionId])
+  @@index([recordedAt])
+}
+
+model ApiKey {
+  id             String   @id @default(uuid())
+  organizationId String
+  userId         String
+  name           String
+  keyPrefix      String
+  keyHash        String
+  scope          Json
+  expiresAt      DateTime?
+  revokedAt      DateTime?
+  lastUsedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([userId])
+}
+
+model Notification {
+  id             String   @id @default(uuid())
+  organizationId String
+  userId         String
+  type           String
+  title          String
+  body           String
+  payload        Json?
+  readAt         DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  organizationId String
+  actorId        String?
+  action         String
+  resource       String
+  resourceId     String?
+  result         String
+  ipAddress      String?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([actorId])
+  @@index([createdAt])
+}
+
+model Webhook {
+  id             String   @id @default(uuid())
+  organizationId String
+  name           String
+  url            String
+  secretHash     String
+  events         Json
+  enabled        Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
+model Integration {
+  id             String   @id @default(uuid())
+  organizationId String
+  type           String
+  status         String
+  config         Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
+model Wallet {
+  id             String   @id @default(uuid())
+  organizationId String
+  userId         String?
+  publicKey      String
+  network        String
+  label          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([userId])
+  @@unique([organizationId, publicKey, network])
+}
+
+model BlockchainTransaction {
+  id             String   @id @default(uuid())
+  organizationId String
+  walletId       String?
+  signature      String   @unique
+  network        String
+  status         String
+  amount         Decimal? @db.Decimal(30, 9)
+  mintAddress    String?
+  metadata       Json?
+  confirmedAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([walletId])
+  @@index([createdAt])
+}
+
+model TreasuryAccount {
+  id             String   @id @default(uuid())
+  organizationId String
+  walletId       String
+  name           String
+  allocation     Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([walletId])
+}
+
+model SystemSetting {
+  id             String   @id @default(uuid())
+  organizationId String?
+  key            String
+  value          Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, key])
+  @@index([organizationId])
+}
