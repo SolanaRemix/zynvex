@@ -11,7 +11,7 @@ export class ZynvexSdk {
       ...init,
       headers: {
         "Content-Type": "application/json",
-        Authorization: `******
+        Authorization: "Bearer " + this.config.apiKey,
         ...(init?.headers || {})
       }
     });
