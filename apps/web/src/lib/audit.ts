@@ -1,4 +1,4 @@
-import { type Prisma, prisma } from "@zynvex/database";
+import { prisma } from "@zynvex/database";
 
 export async function writeAuditLog(input: {
   organizationId: string;
@@ -19,7 +19,7 @@ export async function writeAuditLog(input: {
       resourceId: input.resourceId,
       result: input.result,
       ipAddress: input.ipAddress,
-      metadata: input.metadata as Prisma.InputJsonValue | undefined
+      metadata: input.metadata
     }
   });
 }
