@@ -1,4 +1,13 @@
+import type { Prisma } from "@zynvex/database";
 import { z } from "zod";
+
+type JsonInput = string | number | boolean | null | JsonInput[] | { [key: string]: JsonInput };
+
+const jsonValueSchema: z.ZodType<JsonInput> = z.lazy(() =>
+  z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(jsonValueSchema), z.record(z.string(), jsonValueSchema)])
+);
+
+const jsonObjectSchema: z.ZodType<Prisma.InputJsonObject> = z.record(z.string(), jsonValueSchema);
 
 export const signupSchema = z.object({
   email: z.string().email(),
@@ -42,7 +51,7 @@ export const workflowSchema = z.object({
       z.object({
         nodeType: z.string().min(1),
         name: z.string().min(1),
-        config: z.record(z.string(), z.unknown()).default({}),
+        config: jsonObjectSchema.default({}),
         positionX: z.number().default(0),
         positionY: z.number().default(0)
       })
