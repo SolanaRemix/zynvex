@@ -1,0 +1,30 @@
+{
+  "name": "zynvex-enterprise",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ZYNVEX Enterprise - Autonomous Intelligence Network",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace web",
+    "build": "npm run build --workspace web",
+    "lint": "npm run lint --workspace web",
+    "typecheck": "npm run typecheck --workspace web",
+    "test": "npm run test --workspace web",
+    "test:e2e": "npm run test:e2e --workspace web",
+    "prisma:generate": "npm run prisma:generate --workspace web",
+    "prisma:migrate": "npm run prisma:migrate --workspace web"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "prisma": "^6.15.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.15.0"
+  }
+}
