@@ -26,8 +26,5 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.3"
-  },
-  "overrides": {
-    "deepmerge-ts": "^8.0.2"
   }
 }
