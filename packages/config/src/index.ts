@@ -18,7 +18,11 @@ export const appEnvSchema = z.object({
   S3_BUCKET: z.string().optional(),
   SOLANA_RPC_URL: z.string().optional(),
   ZVX_MINT_ADDRESS: z.string().optional(),
-  JUPITER_API_URL: z.string().optional()
+  JUPITER_API_URL: z.string().optional(),
+  WORKER_ID: z.string().optional(),
+  WORKER_POLL_INTERVAL_MS: z.coerce.number().int().positive().optional(),
+  SCHEDULER_POLL_INTERVAL_MS: z.coerce.number().int().positive().optional(),
+  NEXT_PUBLIC_BASE_URL: z.string().url().optional()
 });
 
 export type AppEnv = z.infer<typeof appEnvSchema>;

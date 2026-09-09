@@ -29,6 +29,8 @@ interface DashboardProps {
     activeProjects: number;
     agents: number;
     runningTasks: number;
+    queuedExecutions: number;
+    pendingApprovals: number;
     monthlyCost: number;
     blockchainStatus: { configured: boolean; message: string };
   };
@@ -123,6 +125,11 @@ export function Dashboard({ homeData }: DashboardProps) {
           <Card title="Agents" value={String(homeData.agents)} />
           <Card title="Running Tasks" value={String(homeData.runningTasks)} />
           <Card title="Monthly Cost" value={`$${homeData.monthlyCost}`} />
+        </section>
+
+        <section className="mt-4 grid gap-4 sm:grid-cols-2">
+          <Card title="Queued Executions" value={String(homeData.queuedExecutions)} />
+          <Card title="Pending Approvals" value={String(homeData.pendingApprovals)} />
         </section>
 
         <section className="mt-6 grid gap-4 lg:grid-cols-2">

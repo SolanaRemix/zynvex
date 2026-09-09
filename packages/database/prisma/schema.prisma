@@ -208,16 +208,24 @@ model Memory {
   organizationId String
   projectId      String?
   ownerId        String
+  agentId        String?
   scope          String
+  type           String   @default("FACT")
+  policy         String   @default("ASK_FIRST")
   source         String
   confidence     Float
   content        String
+  metadata       Json?
+  expiresAt      DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   @@index([organizationId])
   @@index([projectId])
   @@index([ownerId])
+  @@index([agentId])
+  @@index([type])
+  @@index([expiresAt])
 }
 
 model Agent {
@@ -250,10 +258,15 @@ model AgentVersion {
   organizationId String
   agentId        String
   version        Int
+  versionTag     String   @default("1.0.0")
+  status         String   @default("PUBLISHED")
   snapshot       Json
+  changelog      String?
+  publishedAt    DateTime?
   createdAt      DateTime @default(now())
 
   @@unique([agentId, version])
+  @@unique([agentId, versionTag])
   @@index([organizationId])
   @@index([agentId])
 }
@@ -306,10 +319,24 @@ model AgentExecution {
   organizationId String
   projectId      String?
   agentId        String
+  agentVersionId String?
   startedById    String
   status         String
+  priority       Int      @default(0)
+  budget         Json?
+  timeoutSeconds Int?
+  maxIterations  Int?
+  idempotencyKey String?
+  triggerType    String   @default("MANUAL")
+  triggerId      String?
+  queueJobId     String?
+  currentPlanId  String?
+  summary        String?
+  failureReason  String?
+  error          Json?
   input          Json
   output         Json?
+  queuedAt       DateTime @default(now())
   startedAt      DateTime @default(now())
   completedAt    DateTime?
   cost           Decimal? @db.Decimal(18, 8)
@@ -319,7 +346,11 @@ model AgentExecution {
   @@index([organizationId])
   @@index([projectId])
   @@index([agentId])
+  @@index([agentVersionId])
+  @@index([queueJobId])
+  @@index([status])
   @@index([createdAt])
+  @@unique([organizationId, idempotencyKey])
 }
 
 model AgentExecutionStep {
@@ -328,12 +359,62 @@ model AgentExecutionStep {
   executionId    String
   stepIndex      Int
   stage          String
+  status         String   @default("PENDING")
   payload        Json?
   createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@unique([executionId, stepIndex])
   @@index([organizationId])
   @@index([executionId])
+}
+
+model AgentExecutionTransition {
+  id             String   @id @default(uuid())
+  organizationId String
+  executionId    String
+  status         String
+  summary        String
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([executionId])
+  @@index([createdAt])
+}
+
+model AgentPlan {
+  id             String   @id @default(uuid())
+  organizationId String
+  executionId    String   @unique
+  goal           String
+  status         String   @default("PENDING")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
+model AgentPlanStep {
+  id             String   @id @default(uuid())
+  organizationId String
+  planId         String
+  key            String
+  description    String
+  dependencies   Json
+  agentRole      String
+  tools          Json
+  status         String   @default("PENDING")
+  budget         Json?
+  timeoutSeconds Int?
+  orderIndex     Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([planId, key])
+  @@index([organizationId])
+  @@index([planId])
+  @@index([status])
 }
 
 model Workflow {
@@ -371,6 +452,15 @@ model WorkflowExecution {
   workflowId     String
   startedById    String
   status         String
+  priority       Int      @default(0)
+  budget         Json?
+  timeoutSeconds Int?
+  idempotencyKey String?
+  triggerType    String   @default("MANUAL")
+  triggerId      String?
+  queueJobId     String?
+  input          Json?
+  output         Json?
   startedAt      DateTime @default(now())
   completedAt    DateTime?
   failureReason  String?
@@ -379,7 +469,9 @@ model WorkflowExecution {
 
   @@index([organizationId])
   @@index([workflowId])
+  @@index([status])
   @@index([createdAt])
+  @@unique([organizationId, idempotencyKey])
 }
 
 model WorkflowNode {
@@ -430,6 +522,145 @@ model TaskEvent {
   @@index([taskId])
 }
 
+model QueueJob {
+  id             String   @id @default(uuid())
+  organizationId String
+  kind           String
+  dedupeKey      String?
+  status         String   @default("QUEUED")
+  priority       Int      @default(0)
+  payload        Json
+  availableAt    DateTime @default(now())
+  lockedAt       DateTime?
+  lockedBy       String?
+  attempts       Int      @default(0)
+  maxAttempts    Int      @default(3)
+  lastError      String?
+  completedAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([kind])
+  @@index([status, availableAt, priority])
+  @@unique([organizationId, dedupeKey])
+}
+
+model ApprovalRequest {
+  id                String   @id @default(uuid())
+  organizationId    String
+  projectId         String?
+  executionId       String?
+  workflowExecutionId String?
+  requestedById     String?
+  action            String
+  reason            String
+  target            String?
+  inputs            Json
+  riskLevel         String
+  status            String   @default("PENDING")
+  policy            String   @default("THRESHOLD")
+  requiredApprovals Int      @default(1)
+  expiresAt         DateTime?
+  resolvedAt        DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([executionId])
+  @@index([workflowExecutionId])
+  @@index([status])
+}
+
+model ApprovalDecision {
+  id                String   @id @default(uuid())
+  organizationId    String
+  approvalRequestId String
+  approverId        String
+  decision          String
+  comment           String?
+  createdAt         DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([approvalRequestId])
+  @@index([approverId])
+}
+
+model ToolPolicy {
+  id              String   @id @default(uuid())
+  organizationId  String
+  toolId          String
+  role            String
+  riskLevel       String
+  allowed         Boolean  @default(false)
+  requiresApproval Boolean @default(false)
+  maxCalls        Int?
+  allowedDomains  Json?
+  allowedActions  Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([organizationId, toolId, role])
+  @@index([organizationId])
+  @@index([toolId])
+}
+
+model AgentSchedule {
+  id             String   @id @default(uuid())
+  organizationId String
+  agentId        String
+  schedule       String
+  timezone       String
+  enabled        Boolean  @default(true)
+  input          Json?
+  nextRunAt      DateTime?
+  lastRunAt      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([agentId])
+  @@index([enabled, nextRunAt])
+}
+
+model AgentWebhookTrigger {
+  id             String   @id @default(uuid())
+  organizationId String
+  agentId        String
+  publicId       String   @unique
+  secretHash     String
+  secretCipher   String?
+  enabled        Boolean  @default(true)
+  allowedEvents  Json?
+  rateLimitPerMinute Int  @default(30)
+  lastTriggeredAt DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([agentId])
+}
+
+model IdempotencyKey {
+  id             String   @id @default(uuid())
+  organizationId String
+  scope          String
+  key            String
+  status         String   @default("PENDING")
+  resourceType   String
+  resourceId     String?
+  requestHash    String?
+  response       Json?
+  expiresAt      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, scope, key])
+  @@index([organizationId])
+  @@index([resourceType, resourceId])
+}
+
 model ModelProvider {
   id             String   @id @default(uuid())
   organizationId String?
@@ -452,6 +683,24 @@ model ModelConfiguration {
 
   @@index([organizationId])
   @@index([providerId])
+}
+
+model ProviderHealthCheck {
+  id             String   @id @default(uuid())
+  organizationId String?
+  provider       String
+  status         String
+  latencyMs      Int?
+  errorRate      Float?
+  availability   Float?
+  rateLimited    Boolean  @default(false)
+  metadata       Json?
+  checkedAt      DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([provider])
+  @@index([checkedAt])
 }
 
 model UsageRecord {
@@ -528,12 +777,81 @@ model AuditLog {
   @@index([createdAt])
 }
 
+model Prompt {
+  id             String   @id @default(uuid())
+  organizationId String
+  name           String
+  version        String
+  content        String
+  variables      Json?
+  status         String   @default("DRAFT")
+  createdById    String?
+  publishedAt    DateTime?
+  archivedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, name, version])
+  @@index([organizationId])
+  @@index([status])
+}
+
+model Evaluation {
+  id             String   @id @default(uuid())
+  organizationId String
+  agentId        String?
+  workflowId     String?
+  name           String
+  description    String?
+  cases          Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([agentId])
+  @@index([workflowId])
+}
+
+model EvaluationRun {
+  id             String   @id @default(uuid())
+  organizationId String
+  evaluationId   String
+  status         String   @default("QUEUED")
+  summary        Json?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([evaluationId])
+  @@index([status])
+}
+
+model EvaluationResult {
+  id             String   @id @default(uuid())
+  organizationId String
+  evaluationRunId String
+  caseKey        String
+  status         String
+  input          Json?
+  output         Json?
+  metrics        Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([evaluationRunId, caseKey])
+  @@index([organizationId])
+  @@index([evaluationRunId])
+}
+
 model Webhook {
   id             String   @id @default(uuid())
   organizationId String
   name           String
   url            String
   secretHash     String
+  secretCipher   String?
   events         Json
   enabled        Boolean  @default(true)
   createdAt      DateTime @default(now())

@@ -41,7 +41,10 @@ export async function POST(request: Request) {
         model: body.model,
         temperature: body.temperature,
         maxIterations: body.maxIterations,
-        timeoutSeconds: body.timeoutSeconds
+        timeoutSeconds: body.timeoutSeconds,
+        approvalPolicy: body.approvalPolicy,
+        outputFormat: body.outputFormat,
+        permissions: body.permissions
       }
     });
 
