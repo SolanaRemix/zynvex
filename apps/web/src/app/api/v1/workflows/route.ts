@@ -51,7 +51,7 @@ export async function POST(request: Request) {
         organizationId: session.organizationId,
         workflowId: workflow.id,
         version: 1,
-        definition: { nodes: body.nodes }
+        definition: { nodes: body.nodes, edges: body.edges }
       }
     });
 
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
         workflowId: workflow.id,
         nodeType: node.nodeType,
         name: node.name,
-        config: node.config,
+        config: { ...node.config, nodeId: node.id, dependsOn: node.dependsOn },
         positionX: node.positionX,
         positionY: node.positionY
       }))

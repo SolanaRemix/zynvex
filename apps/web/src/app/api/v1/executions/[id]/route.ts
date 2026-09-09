@@ -1,6 +1,7 @@
 import { prisma } from "@zynvex/database";
 import { requestContext } from "@/lib/request";
 import { requireSessionContext } from "@/lib/auth";
+import { getExecutionTimeline } from "@/lib/execution";
 import { ApiError, toErrorResponse } from "@/lib/errors";
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -20,7 +21,24 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       orderBy: { stepIndex: "asc" }
     });
 
-    return Response.json({ execution, steps });
+    const timelinePromise = getExecutionTimeline(session.organizationId, execution.id);
+    const planPromise = prisma.agentPlan.findFirst({
+      where: { executionId: execution.id, organizationId: session.organizationId }
+    });
+    const approvalsPromise = prisma.approvalRequest.findMany({
+      where: { executionId: execution.id, organizationId: session.organizationId },
+      orderBy: { createdAt: "desc" }
+    });
+    const [timeline, plan, approvals] = await Promise.all([timelinePromise, planPromise, approvalsPromise]);
+
+    const planSteps = plan
+      ? await prisma.agentPlanStep.findMany({
+          where: { planId: plan.id, organizationId: session.organizationId },
+          orderBy: { orderIndex: "asc" }
+        })
+      : [];
+
+    return Response.json({ execution, steps, timeline, plan, planSteps, approvals });
   } catch (error) {
     return toErrorResponse(error, ctx.requestId);
   }

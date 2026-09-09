@@ -1,4 +1,5 @@
 import { prisma } from "@zynvex/database";
+import { ModelRouter } from "@zynvex/ai";
 import { requestContext } from "@/lib/request";
 
 export async function GET(request: Request) {
@@ -12,19 +13,22 @@ export async function GET(request: Request) {
     database = "error";
   }
 
+  const queue = await prisma.queueJob.groupBy({
+    by: ["status"],
+    _count: { _all: true }
+  }).catch(() => []);
+
+  const router = new ModelRouter(process.env);
+  const providers = await Promise.all(["openai", "anthropic", "gemini", "deepseek", "ollama"].map((provider) => router.health(provider as never)));
+
   return Response.json({
     status: database === "ok" ? "ok" : "degraded",
     requestId: ctx.requestId,
     checks: {
       database,
       redis: process.env.REDIS_URL ? "configured" : "not_configured",
-      aiProviders: {
-        openai: Boolean(process.env.OPENAI_API_KEY),
-        anthropic: Boolean(process.env.ANTHROPIC_API_KEY),
-        gemini: Boolean(process.env.GEMINI_API_KEY),
-        deepseek: Boolean(process.env.DEEPSEEK_API_KEY),
-        ollama: Boolean(process.env.OLLAMA_BASE_URL)
-      }
+      aiProviders: providers,
+      queue
     },
     latencyMs: Date.now() - startedAt
   });

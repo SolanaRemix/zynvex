@@ -19,10 +19,12 @@ export default async function Home() {
     );
   }
 
-  const [projects, agents, runningTasks, usage] = await Promise.all([
+  const [projects, agents, runningTasks, queuedExecutions, pendingApprovals, usage] = await Promise.all([
     prisma.project.count({ where: { organizationId: session.organizationId, deletedAt: null } }),
     prisma.agent.count({ where: { organizationId: session.organizationId, deletedAt: null } }),
     prisma.task.count({ where: { organizationId: session.organizationId, status: "RUNNING" } }),
+    prisma.agentExecution.count({ where: { organizationId: session.organizationId, status: "QUEUED" } }),
+    prisma.approvalRequest.count({ where: { organizationId: session.organizationId, status: "PENDING" } }),
     prisma.usageRecord.aggregate({
       where: { organizationId: session.organizationId, recordedAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } },
       _sum: { estimatedCost: true }
@@ -36,6 +38,8 @@ export default async function Home() {
           activeProjects: projects,
           agents,
           runningTasks,
+          queuedExecutions,
+          pendingApprovals,
           monthlyCost: Number(usage._sum.estimatedCost ?? 0),
           blockchainStatus: getTokenIntegrationState(process.env)
         }}

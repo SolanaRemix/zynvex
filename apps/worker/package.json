@@ -4,6 +4,6 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node src/index.js"
+    "dev": "node --experimental-strip-types src/index.ts"
   }
 }
