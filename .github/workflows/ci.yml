@@ -15,6 +15,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm run prisma:generate
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
